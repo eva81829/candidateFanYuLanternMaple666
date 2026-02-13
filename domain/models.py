@@ -1,4 +1,4 @@
-from typing import Dict, Literal
+from typing import Dict, Any
 from enum import Enum
 
 class EventType(str, Enum):
@@ -11,7 +11,7 @@ class EventType(str, Enum):
     FAULT_CLEARED = "FaultCleared"
 
 class LockerEvent:
-    def __init__(self, event_id: str, occurred_at: str, locker_id: str, type: EventType, payload: str):
+    def __init__(self, event_id: str, occurred_at: str, locker_id: str, type: EventType, payload: Dict[str, Any]):
         self.event_id = event_id
         self.occurred_at = occurred_at
         self.locker_id = locker_id

@@ -9,7 +9,7 @@ class LockerService:
 
     def handle(self, event: LockerEvent):
         if event.type == EventType.COMPARTMENT_REGISTERED:
-            self._register_compartment(event.locker_id)      
+            self._register_compartment(event)      
 
     def _new_id(self) -> str:
         return str(uuid.uuid4())
@@ -19,17 +19,20 @@ class LockerService:
         self.projection.set_locker(locker)
         return locker
 
-    def _register_compartment(self, locker_id: str) -> str:
-        locker = self.projection.get_locker(locker_id)
-        if not locker:
-            locker = self._register_locker(locker_id)
+    def _register_compartment(self, event: LockerEvent) -> str:
+        # locker = self.projection.get_locker(event.locker_id)
+        # if not locker:
+        #     locker = self._register_locker(event.locker_id)
 
-        compartment_id = self._new_id()
-        compartment = Compartment(compartment_id)
-        locker.add_compartment(compartment)
-        self.projection.set_locker(locker)
-        self.event_store.append_event({"type": "CompartmentRegistered", "locker_id": locker.locker_id, "compartment_id": compartment_id})
-        return compartment_id
+        # compartment_id = self._new_id()
+        # compartment = Compartment(compartment_id)
+        # locker.add_compartment(compartment)
+
+        # self.projection.set_locker(locker)
+        # return compartment_id
+
+        self.event_store.append(event)
+        return ""
     
     # def create_reservation():
     # def deposite_parcel():

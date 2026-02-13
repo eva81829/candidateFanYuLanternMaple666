@@ -1,13 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
-from domain.models import Reservation, Compartment, Locker
+from typing import Optional, List
+from domain.models import LockerEvent, Reservation, Compartment, Locker
 
 class EventStore(ABC):
     @abstractmethod
-    def append_event(self, event: Dict[str, Any]) -> None: ...
+    def load_all(self) -> List[LockerEvent]: ...
     @abstractmethod
-    def read_events(self): ...
-    
+    def load_by_locker(self, locker_id: str) -> List[LockerEvent]: ...
+    @abstractmethod
+    def append(self, event: LockerEvent) -> None: ...
+
 class Projection(ABC):
     @abstractmethod
     def set_locker(self, locker: Locker) -> None: ...

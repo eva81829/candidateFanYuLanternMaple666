@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Literal
+from typing import Any
 from domain.models import EventType
 
 class Event(BaseModel):
@@ -7,4 +7,4 @@ class Event(BaseModel):
         occurred_at: str
         locker_id: str
         type: EventType
-        payload: str
+        payload: dict[str, Any]
