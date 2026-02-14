@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
-from domain.models import LockerEvent, Locker
+from domain.models import LockerEvent, Locker, Compartment, Reservation
 
 class EventStore(ABC):
     @abstractmethod
@@ -12,6 +12,13 @@ class EventStore(ABC):
 
 class Projection(ABC):
     @abstractmethod
-    def set_locker(self, locker: Locker) -> None: ...
+    def apply(self, event: LockerEvent) -> None: ...
     @abstractmethod
-    def get_locker(self, locker_id: str) -> Optional[Locker]: ...
+    def query_locker(self, locker_id: str) -> Locker | None: ...
+    # @abstractmethod
+    # def query_compartment(self, locker_id: str, compartment_id: str) -> Compartment | None: ...
+    # @abstractmethod
+    # def query_reservation(self, reservation_id: str) -> Reservation | None: ...
+
+    # @abstractmethod
+    # def rebuild(self, event_store: EventStore) -> None: ...

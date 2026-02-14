@@ -1,5 +1,4 @@
-import uuid
-from domain.models import EventType, LockerEvent, ResvStatus, Reservation, Compartment, Locker
+from domain.models import LockerEvent, Locker, Compartment, Reservation
 from domain.repositories import EventStore, Projection
 
 class LockerService:
@@ -8,48 +7,16 @@ class LockerService:
         self.event_store = event_store
 
     def handle(self, event: LockerEvent):
-        if event.type == EventType.COMPARTMENT_REGISTERED:
-            self._register_compartment(event)      
-
-    def _new_id(self) -> str:
-        return str(uuid.uuid4())
-    
-    def _register_locker(self, locker_id: str) -> Locker:
-        locker = Locker(locker_id)
-        self.projection.set_locker(locker)
-        return locker
-
-    def _register_compartment(self, event: LockerEvent) -> str:
-        # locker = self.projection.get_locker(event.locker_id)
-        # if not locker:
-        #     locker = self._register_locker(event.locker_id)
-
-        # compartment_id = self._new_id()
-        # compartment = Compartment(compartment_id)
-        # locker.add_compartment(compartment)
-
-        # self.projection.set_locker(locker)
-        # return compartment_id
-
+        self.projection.apply(event)
         self.event_store.append(event)
-        return ""
-    
-    # def create_reservation():
-    # def deposite_parcel():
-    # def picked_up_parcel():
-    # def expire_reservation():      
-    # def report_fault(): 
-    # def clear_fault():  
 
     def get_locker_state(self, locker_id: str) -> Locker:
-        locker = Locker(locker_id)
-        locker.state_hash ="hash"
-        return locker
+        return self.projection.query_locker(locker_id)
 
-    def get_compartment_state(self, locker_id: str, compartment_id: str) -> Compartment:
-        compartment = Compartment(compartment_id)
-        return compartment
+    # def get_compartment_state(self, locker_id: str, compartment_id: str) -> Compartment:
+    #     return self.projection.query_compartment(locker_id, compartment_id)
 
-    def get_reservation_state(self, reservation_id: str) -> Reservation:
-        reservation = Reservation(reservation_id, "CREATED")
-        return reservation
+    # def get_reservation_state(self, reservation_id: str) -> Reservation:
+    #     return self.projection.query_reservation(reservation_id)
+
+    # self.projection.rebuild(self.event_store)
