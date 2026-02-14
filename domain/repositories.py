@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
-from domain.models import LockerEvent, Reservation, Compartment, Locker
+from domain.models import LockerEvent, Locker
 
 class EventStore(ABC):
     @abstractmethod

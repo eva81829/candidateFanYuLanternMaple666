@@ -1,5 +1,5 @@
 import uuid
-from domain.models import EventType, LockerEvent, Reservation, Compartment, Locker
+from domain.models import EventType, LockerEvent, ResvStatus, Reservation, Compartment, Locker
 from domain.repositories import EventStore, Projection
 
 class LockerService:
@@ -39,4 +39,17 @@ class LockerService:
     # def picked_up_parcel():
     # def expire_reservation():      
     # def report_fault(): 
-    # def clear_fault():    
+    # def clear_fault():  
+
+    def get_locker_state(self, locker_id: str) -> Locker:
+        locker = Locker(locker_id)
+        locker.state_hash ="hash"
+        return locker
+
+    def get_compartment_state(self, locker_id: str, compartment_id: str) -> Compartment:
+        compartment = Compartment(compartment_id)
+        return compartment
+
+    def get_reservation_state(self, reservation_id: str) -> Reservation:
+        reservation = Reservation(reservation_id, "CREATED")
+        return reservation

@@ -43,8 +43,8 @@ class FileEventStore(EventStore):
     def _append_event(self, event):
         with self.file_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps({
-                    "event_id": event.event_id,
-                    "occurred_at": event.occurred_at,
+                    "event_id": str(event.event_id),
+                    "occurred_at": str(event.occurred_at),
                     "locker_id": event.locker_id,
                     "type": event.type,
                     "payload": event.payload
