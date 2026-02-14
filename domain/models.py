@@ -65,6 +65,14 @@ class Locker:
         compartment = Compartment(compartment_id)
         self._compartments[compartment_id] = compartment
 
+    def get_reservation(self, compartment_id: str) -> Reservation | None:
+        compartment_id
+        if compartment_id not in self._compartments:
+            raise Exception("Compartment not found")
+        
+        compartment = self._compartments[compartment_id]
+        return compartment.reservation
+
     def add_reservation(self, compartment_id: str, reservation_id: str) -> None:
         # a reservation can only exist for an existing compartment
         if compartment_id not in self._compartments:
@@ -77,11 +85,6 @@ class Locker:
         
         reservation = Reservation(reservation_id)
         compartment.reservation = reservation
-
-    # def get_
-
-    #     if compartment_id not in self._compartments:
-    #         raise Exception("Compartment not found")
 
     # def degrade_compartment(self, compartment_id: str) -> None:
 

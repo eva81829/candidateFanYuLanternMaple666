@@ -10,6 +10,8 @@ class InMemoryProjection(Projection):
     def apply(self, event: LockerEvent) -> None:
         if event.type == EventType.COMPARTMENT_REGISTERED:
             self._register_compartment(event)
+        elif event.type == EventType.RESERVATION_CREATED:
+            self._create_reservation(event)       
 
     def query_locker(self, locker_id: str) -> Locker | None:
         return self._lockers.get(locker_id)
@@ -20,27 +22,40 @@ class InMemoryProjection(Projection):
     #         return None
     #     return locker.get_compartment(compartment_id)
 
-    # def query_reservation(self, reservation_id: str) -> Reservation | None:
-    #     return self._reservations.get(reservation_id)
+    def query_reservation(self, reservation_id: str) -> Reservation | None:
+        return self._reservations.get(reservation_id)
 
     def _register_compartment(self, event: LockerEvent) -> None:
+        comp_id = event.payload.get(PayloadType.COMPARTMENT_ID)
+        if not comp_id:
+            raise Exception("Compartment ID required")
+
         # if a locker cannot be found, it is treated as a new locker and added
         locker = self.query_locker(event.locker_id)
         if not locker:
             locker = Locker(event.locker_id)
+            self._lockers[event.locker_id] = locker
 
-        compartment_id = event.payload[PayloadType.COMPARTMENT_ID]
-        locker.add_compartment(compartment_id)
-        self._lockers[event.locker_id] = locker
+        locker.add_compartment(comp_id)
 
-    # def create_reservation():
+    def _create_reservation(self, event: LockerEvent) -> None:
+        comp_id = event.payload.get(PayloadType.COMPARTMENT_ID)
+        if not comp_id:
+            raise Exception("Compartment ID required")
+        
+        resv_id = event.payload.get(PayloadType.RESERVATION_ID)
+        if not resv_id:
+            raise Exception("Reservation ID required")
 
+        locker = self.query_locker(event.locker_id)
+        if not locker:
+            raise Exception("Locker not found")
 
-    #         if event.type == EventType.RESERVATION_CREATED:
-    #             resv_id = event.payload[PayloadType.RESERVATION_ID]
-    #             status = event.payload[PayloadType.STATUS]
-    #             self._reservations[resv_id] = Reservation(resv_id, status)
+        if resv_id in self._reservations:
+            raise Exception("Reservation ID duplicates")
 
+        locker.add_reservation(comp_id, resv_id)
+        self._reservations[resv_id] = locker.get_reservation(comp_id)
 
     # def deposite_parcel():
     # def picked_up_parcel():
