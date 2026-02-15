@@ -20,8 +20,8 @@ class InMemoryProjection(Projection):
         elif event.type == EventType.PARCEL_DEPOSITED:
             result = self._deposite_parcel(event)
         elif event.type == EventType.PARCEL_PICKED_UP:
-            result = self._picked_up_parcel(event)                        
-        elif event.type == EventType.RESERVATION_EXPIRED:          
+            result = self._picked_up_parcel(event)                     
+        elif event.type == EventType.RESERVATION_EXPIRED:
             result = self._expire_reservation(event)
         elif event.type == EventType.FAULT_REPORTED:
             result = self._report_fault(event)

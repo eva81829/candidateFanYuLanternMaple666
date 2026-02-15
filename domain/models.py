@@ -32,7 +32,7 @@ class PayloadType(str, Enum):
 
 class LockerEvent:
     def __init__(self, event_id: str, occurred_at: str, locker_id: str, type: EventType, payload: dict[str, Any]):
-        self.event_id = event_id
+        self.event_id = str(event_id)
         self.occurred_at = occurred_at
         self.locker_id = locker_id
         self.type = type

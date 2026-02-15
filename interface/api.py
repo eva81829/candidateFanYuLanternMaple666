@@ -20,7 +20,7 @@ def handle_event(event: Event) -> Response:
         status_code = status.HTTP_202_ACCEPTED
     elif result == EventResult.DUPLICATE:
         content = '{"description": "Duplicate event (idempotent)"}'
-        status_code = status.HTTP_200_OK       
+        status_code = status.HTTP_200_OK
     elif result == EventResult.DOMAIN_VIOLATION:
         content = '{"description": "Domain rule violation"}'
         status_code = status.HTTP_409_CONFLICT
