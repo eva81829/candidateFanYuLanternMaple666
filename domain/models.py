@@ -30,21 +30,6 @@ class LockerEvent:
         self.type = type
         self.payload = payload
 
-
-# class Service:
-#     def __init__(self):
-    
-#     def get_locker(self, locker_id: str) -> Locker | None:
-#         return self._lockers.get(locker_id)
-
-#     def _add_locker(self, locker_id: str):
-#         # if locker_id in self._lockers:
-#         #     raise Exception("Locker already exists")
-#         locker = Locker(locker_id)
-#         self._lockers[locker_id] = locker
-
-
-
 # Aggregate Root
 class Locker:
     def __init__(self, locker_id: str):
@@ -88,26 +73,24 @@ class Locker:
         compartment.reservation = reservation
         self.num_reservation += 1
 
-    # def degrade_compartment(self, compartment_id: str) -> None:
-
+    def update_reservation(self, compartment_id: str, reservation_id: str, status: ResvStatus):
+        # a reservation can only exist for an existing compartment
+        if compartment_id not in self._compartments:
+            raise Exception("Compartment not found")
         
+        # reservation can only be updated for an existing reservation
+        compartment = self._compartments[compartment_id]
+        if not compartment.reservation:
+            raise Exception("Reservation not found")
+
+        if compartment.reservation.reservation_id != reservation_id:
+            raise Exception("Reservation ID does not match")
+        compartment.reservation.status = status
+
+    # def degrade_compartment(self, compartment_id: str) -> None:
     #     compartment = self._compartments[compartment_id]
     #     compartment.degraded = True
     #     compartment.reservation = None
-
-    # def update_reservation(self, compartment_id: str, reservation_id: str, status: ResvStatus):
-    #     # a reservation can only exist for an existing compartment
-    #     if compartment_id not in self._compartments:
-    #         raise Exception("Compartment not found")
-        
-    #     # reservation can only be updated for an existing reservation
-    #     compartment = self._compartments[compartment_id]
-    #     if not compartment.reservation:
-    #         raise Exception("Reservation not found")
-
-    #     if compartment.reservation.reservation_id != reservation_id:
-    #         raise Exception("Reservation ID does not match")
-    #     compartment.reservation.status = status
 
 class Compartment:
     def __init__(self, compartment_id: str):

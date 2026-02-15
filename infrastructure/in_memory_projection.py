@@ -1,4 +1,4 @@
-from domain.models import EventType, PayloadType, LockerEvent, Locker, Compartment, Reservation
+from domain.models import EventType, ResvStatus,PayloadType, LockerEvent, Locker, Compartment, Reservation
 from domain.repositories import EventStore, Projection
 
 class InMemoryProjection(Projection):
@@ -10,7 +10,9 @@ class InMemoryProjection(Projection):
         if event.type == EventType.COMPARTMENT_REGISTERED:
             self._register_compartment(event)
         elif event.type == EventType.RESERVATION_CREATED:
-            self._create_reservation(event)       
+            self._create_reservation(event)  
+        elif event.type == EventType.RESERVATION_EXPIRED:
+            self._expire_reservation(event)
 
     def query_locker(self, locker_id: str) -> Locker | None:
         return self._lockers.get(locker_id)
@@ -58,8 +60,24 @@ class InMemoryProjection(Projection):
 
     # def deposite_parcel():
     # def picked_up_parcel():
-    # def expire_reservation():
-    # def report_fault(): 
+
+    # set reservation to "EXPIRED"
+    def _expire_reservation(self, event: LockerEvent) -> None:
+        comp_id = event.payload.get(PayloadType.COMPARTMENT_ID)
+        if not comp_id:
+            raise Exception("Compartment ID required")
+        
+        resv_id = event.payload.get(PayloadType.RESERVATION_ID)
+        if not resv_id:
+            raise Exception("Reservation ID required")
+
+        locker = self.query_locker(event.locker_id)
+        if not locker:
+            raise Exception("Locker not found")
+
+        locker.update_reservation(comp_id, resv_id, ResvStatus.EXPIRED)
+
+    # def report_fault():
     # def clear_fault():
 
 
