@@ -91,8 +91,9 @@ def test_api_flow(client: TestClient) -> None:
     assert response.status_code == 202
 
    # FAULT_REPORTED: locker2_id, comp2_id
+    reported_event_id = str(uuid.uuid4())
     event = {
-        "event_id": str(uuid.uuid4()),
+        "event_id": reported_event_id,
         "occurred_at": datetime.now().isoformat(),
         "locker_id": locker2_id,
         "type": EventType.FAULT_REPORTED,
@@ -143,6 +144,17 @@ def test_api_flow(client: TestClient) -> None:
         "locker_id": locker3_id,
         "type": EventType.PARCEL_PICKED_UP,
         "payload": {PayloadType.COMPARTMENT_ID: comp3_id, PayloadType.RESERVATION_ID: resv3_id}
+    }
+    response = client.post("/events", json = event)
+    assert response.status_code == 202
+
+   # FAULT_CLEARED: locker2_id, comp2_id
+    event = {
+        "event_id": str(uuid.uuid4()),
+        "occurred_at": datetime.now().isoformat(),
+        "locker_id": locker2_id,
+        "type": EventType.FAULT_CLEARED,
+        "payload": {PayloadType.COMPARTMENT_ID: comp2_id, PayloadType.REPORTED_EVENT_ID: reported_event_id}
     }
     response = client.post("/events", json = event)
     assert response.status_code == 202

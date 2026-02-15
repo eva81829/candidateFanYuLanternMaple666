@@ -11,7 +11,7 @@ class InMemoryProjection(Projection):
             self.apply(event)
         return EventResult.SUCCESS
 
-    def apply(self, event: LockerEvent) -> int:
+    def apply(self, event: LockerEvent, event_store: EventStore) -> int:
         result = EventResult.SUCCESS
         if event.type == EventType.COMPARTMENT_REGISTERED:
             result =  self._register_compartment(event)
@@ -26,7 +26,7 @@ class InMemoryProjection(Projection):
         elif event.type == EventType.FAULT_REPORTED:
             result = self._report_fault(event)
         elif event.type == EventType.FAULT_CLEARED:
-            result = self._clear_fault(event)             
+            result = self._clear_fault(event, event_store)     
         return result
 
     def query_locker(self, locker_id: str) -> Locker | None:
@@ -165,9 +165,38 @@ class InMemoryProjection(Projection):
         
         return locker.report_fault_compartment(comp_id, severity)
 
-    def _clear_fault(self, event: LockerEvent) -> int:
-        return EventResult.SUCCESS        
+    def _clear_fault(self, event: LockerEvent, event_store: EventStore) -> int:
+        comp_id = event.payload.get(PayloadType.COMPARTMENT_ID)
+        # Compartment ID required
+        if not comp_id:
+            return EventResult.VALIDATION_ERROR
 
-        # comp_id = event.payload.get(PayloadType.COMPARTMENT_ID)
-        # if not comp_id:
-        #     raise Exception("Compartment ID required")
+        reported_event_id = event.payload.get(PayloadType.REPORTED_EVENT_ID)
+        # a `FaultCleared` event must reference a prior `FaultReported.event_id`
+        if not reported_event_id:
+            return EventResult.VALIDATION_ERROR
+
+        locker = self.query_locker(event.locker_id)
+        # Locker not found
+        if not locker:
+            return EventResult.VALIDATION_ERROR
+
+        events = event_store.load_by_locker(event.locker_id) 
+        is_reported = False
+        is_cleared = False
+        for e in events:
+            # the referenced fault must belong to the same compartment
+            if e.type == EventType.FAULT_REPORTED:
+                if (e.payload.get(PayloadType.COMPARTMENT_ID) == comp_id
+                    and e.event_id  == reported_event_id):
+                    is_reported = True
+            elif e.type == EventType.FAULT_CLEARED:
+                if (e.payload.get(PayloadType.COMPARTMENT_ID) == comp_id
+                    and e.payload.get(PayloadType.REPORTED_EVENT_ID) == reported_event_id):
+                    is_cleared = True
+
+        # # clearing a non-existing or already-cleared fault is invalid
+        if (not is_reported or is_cleared):
+            return EventResult.VALIDATION_ERROR
+
+        return locker.clear_fault_compartment(comp_id)

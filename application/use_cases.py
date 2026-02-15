@@ -7,7 +7,7 @@ class LockerService:
         self.event_store = event_store
 
     def handle(self, event: LockerEvent):
-        result = self.projection.apply(event)
+        result = self.projection.apply(event, self.event_store)
         if result != EventResult.SUCCESS:
             return result
         return self.event_store.append(event)

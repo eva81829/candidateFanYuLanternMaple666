@@ -28,6 +28,7 @@ class PayloadType(str, Enum):
     RESERVATION_ID = "reservation_id"
     STATUS = "status"
     SEVERITY = "severity"
+    REPORTED_EVENT_ID = "reported_event_id"
 
 class LockerEvent:
     def __init__(self, event_id: str, occurred_at: str, locker_id: str, type: EventType, payload: dict[str, Any]):
@@ -65,10 +66,21 @@ class Locker:
         if compartment_id not in self._compartments:
             return EventResult.DOMAIN_VIOLATION
         
+        compartment = self._compartments[compartment_id]
+        compartment.fault = True
         # a compartment with fault of severity ≥ 3 are degraded
         if severity >= 3:
-            compartment = self._compartments[compartment_id]
             compartment.degraded = True
+        return EventResult.SUCCESS
+
+    def clear_fault_compartment(self, compartment_id: str) -> int:
+        # compartment not found
+        if compartment_id not in self._compartments:
+            return EventResult.DOMAIN_VIOLATION
+        
+        compartment = self._compartments[compartment_id]
+        compartment.fault = False        
+        compartment.degraded = False
         return EventResult.SUCCESS
 
     def get_reservation(self, compartment_id: str) -> Reservation | None:
@@ -137,6 +149,7 @@ class Locker:
 class Compartment:
     def __init__(self, compartment_id: str):
         self.compartment_id = compartment_id
+        self.fault: bool = False
         self.degraded: bool = False
         self.reservation: Reservation | None = None
 
