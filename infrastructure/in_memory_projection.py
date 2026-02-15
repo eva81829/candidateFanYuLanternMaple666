@@ -1,7 +1,6 @@
 from domain.models import EventType, PayloadType, LockerEvent, Locker, Compartment, Reservation
 from domain.repositories import EventStore, Projection
 
-
 class InMemoryProjection(Projection):
     def __init__(self):
         self._lockers: dict[str, Locker] = {} # key = locker_id
@@ -16,11 +15,11 @@ class InMemoryProjection(Projection):
     def query_locker(self, locker_id: str) -> Locker | None:
         return self._lockers.get(locker_id)
     
-    # def query_compartment(self, locker_id: str, compartment_id: str) -> Compartment | None:
-    #     locker = self._lockers.get(locker_id)
-    #     if not locker:
-    #         return None
-    #     return locker.get_compartment(compartment_id)
+    def query_compartment(self, locker_id: str, compartment_id: str) -> Compartment | None:
+        locker = self._lockers.get(locker_id)
+        if not locker:
+            return None
+        return locker.get_compartment(compartment_id)
 
     def query_reservation(self, reservation_id: str) -> Reservation | None:
         return self._reservations.get(reservation_id)
@@ -59,7 +58,7 @@ class InMemoryProjection(Projection):
 
     # def deposite_parcel():
     # def picked_up_parcel():
-    # def expire_reservation():      
+    # def expire_reservation():
     # def report_fault(): 
     # def clear_fault():
 

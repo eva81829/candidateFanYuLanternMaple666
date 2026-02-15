@@ -49,11 +49,11 @@ class LockerEvent:
 class Locker:
     def __init__(self, locker_id: str):
         self.locker_id = locker_id
-        self._compartments: dict[str, Compartment] = {}  # {"compartment_id", Compartment} 
         self.num_compartment: int = 0
         self.num_reservation: int = 0
         self.num_degraded: int = 0
-        self.state_hash: str = None
+        self.state_hash: str = ""
+        self._compartments: dict[str, Compartment] = {}  # {"compartment_id", Compartment} 
 
     def get_compartment(self, compartment_id: str) -> Compartment | None:
         return self._compartments.get(compartment_id)
@@ -64,6 +64,7 @@ class Locker:
 
         compartment = Compartment(compartment_id)
         self._compartments[compartment_id] = compartment
+        self.num_compartment += 1
 
     def get_reservation(self, compartment_id: str) -> Reservation | None:
         compartment_id
@@ -85,6 +86,7 @@ class Locker:
         
         reservation = Reservation(reservation_id)
         compartment.reservation = reservation
+        self.num_reservation += 1
 
     # def degrade_compartment(self, compartment_id: str) -> None:
 

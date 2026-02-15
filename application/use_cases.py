@@ -13,8 +13,8 @@ class LockerService:
     def get_locker_state(self, locker_id: str) -> Locker:
         return self.projection.query_locker(locker_id)
 
-    # def get_compartment_state(self, locker_id: str, compartment_id: str) -> Compartment:
-    #     return self.projection.query_compartment(locker_id, compartment_id)
+    def get_compartment_state(self, locker_id: str, compartment_id: str) -> Compartment:
+        return self.projection.query_compartment(locker_id, compartment_id)
 
     def get_reservation_state(self, reservation_id: str) -> Reservation:
         return self.projection.query_reservation(reservation_id)

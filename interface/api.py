@@ -28,21 +28,21 @@ def get_locker(locker_id: str) -> LockerSummary:
             state_hash = locker.state_hash
         )
 
-# @app.get("/lockers/{locker_id}/compartments/{compartment_id}")
-# def get_compartment(locker_id: str, compartment_id: str) -> CompartmentStatus:
-#     compartment = service.get_compartment_state(locker_id, compartment_id)
+@app.get("/lockers/{locker_id}/compartments/{compartment_id}")
+def get_compartment(locker_id: str, compartment_id: str) -> CompartmentStatus:
+    compartment = service.get_compartment_state(locker_id, compartment_id)
 
-#     return CompartmentStatus(
-#             compartment_id = compartment.compartment_id,
-#             degraded = compartment.degraded,
-#             active_reservation = compartment.reservation.reservation_id if compartment.reservation else None
-#         )
+    return CompartmentStatus(
+            compartment_id = compartment.compartment_id,
+            degraded = compartment.degraded,
+            active_reservation = compartment.reservation.reservation_id if compartment.reservation else None
+        )
 
-# @app.get("/reservations/{reservation_id}")
-# def get_reservation(reservation_id: str):
-#     reservation = service.get_reservation_state(reservation_id)
+@app.get("/reservations/{reservation_id}")
+def get_reservation(reservation_id: str):
+    reservation = service.get_reservation_state(reservation_id)
 
-#     return ReservationStatus(
-#             reservation_id = reservation.reservation_id,
-#             status = reservation.status
-#         )
+    return ReservationStatus(
+            reservation_id = reservation.reservation_id,
+            status = reservation.status
+        )
