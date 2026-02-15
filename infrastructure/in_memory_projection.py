@@ -1,4 +1,4 @@
-from domain.models import EventResult, EventType, ResvStatus,PayloadType, LockerEvent, Locker, Compartment, Reservation
+from domain.models import EventResult, EventType, PayloadType, LockerEvent, Locker, Compartment, Reservation
 from domain.repositories import EventStore, Projection
 
 class InMemoryProjection(Projection):
@@ -17,10 +17,16 @@ class InMemoryProjection(Projection):
             result =  self._register_compartment(event)
         elif event.type == EventType.RESERVATION_CREATED:
             result = self._create_reservation(event)
-        elif event.type == EventType.RESERVATION_EXPIRED:
+        elif event.type == EventType.PARCEL_DEPOSITED:
+            result = self._deposite_parcel(event)
+        elif event.type == EventType.PARCEL_PICKED_UP:
+            result = self._picked_up_parcel(event)                        
+        elif event.type == EventType.RESERVATION_EXPIRED:          
             result = self._expire_reservation(event)
         elif event.type == EventType.FAULT_REPORTED:
-            result = self._report_fault(event) 
+            result = self._report_fault(event)
+        elif event.type == EventType.FAULT_CLEARED:
+            result = self._clear_fault(event)             
         return result
 
     def query_locker(self, locker_id: str) -> Locker | None:
@@ -70,11 +76,57 @@ class InMemoryProjection(Projection):
             return EventResult.VALIDATION_ERROR
 
         result = locker.add_reservation(comp_id, resv_id)
-        self._reservations[resv_id] = locker.get_reservation(comp_id)
-        return result
+        if result != EventResult.SUCCESS:
+            return result
 
-    # def deposite_parcel():
-    # def picked_up_parcel():
+        self._reservations[resv_id] = locker.get_reservation(comp_id)
+        return EventResult.SUCCESS
+
+    def _deposite_parcel(self, event: LockerEvent) -> int:
+        comp_id = event.payload.get(PayloadType.COMPARTMENT_ID)
+        # Compartment ID required
+        if not comp_id:
+            return EventResult.VALIDATION_ERROR
+
+        resv_id = event.payload.get(PayloadType.RESERVATION_ID)
+        # Reservation ID required
+        if not resv_id:
+            return EventResult.VALIDATION_ERROR
+
+        resv_id = event.payload.get(PayloadType.RESERVATION_ID)
+        # Reservation ID required
+        if not resv_id:
+            return EventResult.VALIDATION_ERROR
+
+        locker = self.query_locker(event.locker_id)
+        # Locker not found
+        if not locker:
+            return EventResult.VALIDATION_ERROR
+
+        return locker.deposite_parcel(comp_id, resv_id)  
+
+    def _picked_up_parcel(self, event: LockerEvent) -> int:
+        comp_id = event.payload.get(PayloadType.COMPARTMENT_ID)
+        # Compartment ID required
+        if not comp_id:
+            return EventResult.VALIDATION_ERROR
+
+        resv_id = event.payload.get(PayloadType.RESERVATION_ID)
+        # Reservation ID required
+        if not resv_id:
+            return EventResult.VALIDATION_ERROR
+
+        resv_id = event.payload.get(PayloadType.RESERVATION_ID)
+        # Reservation ID required
+        if not resv_id:
+            return EventResult.VALIDATION_ERROR
+
+        locker = self.query_locker(event.locker_id)
+        # Locker not found
+        if not locker:
+            return EventResult.VALIDATION_ERROR
+
+        return locker.pick_up_parcel(comp_id, resv_id)             
 
     # set reservation to "EXPIRED"
     def _expire_reservation(self, event: LockerEvent) -> int:
@@ -93,7 +145,7 @@ class InMemoryProjection(Projection):
         if not locker:
             return EventResult.VALIDATION_ERROR
 
-        return locker.update_reservation(comp_id, resv_id, ResvStatus.EXPIRED)
+        return locker.expire_reservation(comp_id, resv_id)
 
     def _report_fault(self, event: LockerEvent) -> int:
         comp_id = event.payload.get(PayloadType.COMPARTMENT_ID)
@@ -113,7 +165,9 @@ class InMemoryProjection(Projection):
         
         return locker.report_fault_compartment(comp_id, severity)
 
-    # def _clear_fault(self, event: LockerEvent) -> None:
+    def _clear_fault(self, event: LockerEvent) -> int:
+        return EventResult.SUCCESS        
+
         # comp_id = event.payload.get(PayloadType.COMPARTMENT_ID)
         # if not comp_id:
         #     raise Exception("Compartment ID required")

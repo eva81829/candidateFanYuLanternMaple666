@@ -51,7 +51,7 @@ class Locker:
         return self._compartments.get(compartment_id)
 
     def add_compartment(self, compartment_id: str) -> int:
-        # Compartment already exists
+        # compartment already exists
         if compartment_id in self._compartments:
             return EventResult.DOMAIN_VIOLATION
 
@@ -61,7 +61,7 @@ class Locker:
         return EventResult.SUCCESS
 
     def report_fault_compartment(self, compartment_id: str, severity: int) -> int:
-        # Compartment not found
+        # compartment not found
         if compartment_id not in self._compartments:
             return EventResult.DOMAIN_VIOLATION
         
@@ -79,11 +79,11 @@ class Locker:
         return compartment.reservation
 
     def add_reservation(self, compartment_id: str, reservation_id: str) -> int:
-        # a reservation can only exist for an existing compartment
+        # reservation can only exist for an existing compartment
         if compartment_id not in self._compartments:
             return EventResult.DOMAIN_VIOLATION
 
-        # a compartment can have at most one active reservation at a time
+        # compartment can have at most one active reservation at a time
         compartment = self._compartments[compartment_id]
         if compartment.reservation:
             return EventResult.DOMAIN_VIOLATION
@@ -97,7 +97,16 @@ class Locker:
         self.num_reservation += 1
         return EventResult.SUCCESS
 
-    def update_reservation(self, compartment_id: str, reservation_id: str, status: ResvStatus) -> int:
+    def deposite_parcel(self, compartment_id: str, reservation_id: str) -> int:
+        return self._update_reservation(compartment_id, reservation_id, ResvStatus.DEPOSITED)
+    
+    def pick_up_parcel(self, compartment_id: str, reservation_id: str) -> int:
+        return self._update_reservation(compartment_id, reservation_id, ResvStatus.PICKED_UP)
+
+    def expire_reservation(self, compartment_id: str, reservation_id: str) -> int:
+        return self._update_reservation(compartment_id, reservation_id, ResvStatus.EXPIRED)
+
+    def _update_reservation(self, compartment_id: str, reservation_id: str, status: ResvStatus) -> int:
         # a reservation can only exist for an existing compartment
         if compartment_id not in self._compartments:
             return EventResult.DOMAIN_VIOLATION
@@ -107,9 +116,20 @@ class Locker:
         if not compartment.reservation:
             return EventResult.DOMAIN_VIOLATION
 
-        # Reservation ID does not match
+        # reservation id does not match
         if compartment.reservation.reservation_id != reservation_id:
             return EventResult.DOMAIN_VIOLATION
+
+        # parcel deposit is only valid after reservation creation and before pickup or expiration
+        if status == ResvStatus.DEPOSITED:
+            if compartment.reservation.status in {ResvStatus.PICKED_UP, ResvStatus.EXPIRED}:
+                return EventResult.DOMAIN_VIOLATION
+        
+        # parcel pickup is only valid after deposit
+        # expired reservations cannot be picked up
+        if status == ResvStatus.PICKED_UP:
+            if compartment.reservation.status != ResvStatus.DEPOSITED:
+                return EventResult.DOMAIN_VIOLATION
 
         compartment.reservation.status = status
         return EventResult.SUCCESS

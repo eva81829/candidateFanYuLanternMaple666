@@ -16,12 +16,15 @@ def client() -> TestClient:
 def test_api_flow(client: TestClient) -> None:
     locker1_id = "L1"
     locker2_id = "L2"
+    locker3_id = "L3"
 
     comp1_id = "C1"
     comp2_id = "C2"
+    comp3_id = "C3"
 
     resv1_id = "R1"
-    resv2_id = "R2" 
+    resv2_id = "R2"
+    resv3_id = "R3"    
 
     # COMPARTMENT_REGISTERED: locker1_id, comp1_id
     event = {
@@ -99,3 +102,47 @@ def test_api_flow(client: TestClient) -> None:
     assert response.status_code == 202
     json_data = response.json()
     assert json_data["description"] == "Event accepted"
+
+   # COMPARTMENT_REGISTERED: locker3_id, comp3_id
+    event = {
+        "event_id": str(uuid.uuid4()),
+        "occurred_at": datetime.now().isoformat(),
+        "locker_id": locker3_id,
+        "type": EventType.COMPARTMENT_REGISTERED,
+        "payload": {PayloadType.COMPARTMENT_ID: comp3_id}
+    }
+    response = client.post("/events", json = event)
+    assert response.status_code == 202
+
+   # RESERVATION_CREATED: locker3_id, comp3_id, resv3_id
+    event = {
+        "event_id": str(uuid.uuid4()),
+        "occurred_at": datetime.now().isoformat(),
+        "locker_id": locker3_id,
+        "type": EventType.RESERVATION_CREATED,
+        "payload": {PayloadType.COMPARTMENT_ID: comp3_id, PayloadType.RESERVATION_ID: resv3_id}
+    }
+    response = client.post("/events", json = event)
+    assert response.status_code == 202
+
+   # PARCEL_DEPOSITED: locker3_id, comp3_id
+    event = {
+        "event_id": str(uuid.uuid4()),
+        "occurred_at": datetime.now().isoformat(),
+        "locker_id": locker3_id,
+        "type": EventType.PARCEL_DEPOSITED,
+        "payload": {PayloadType.COMPARTMENT_ID: comp3_id, PayloadType.RESERVATION_ID: resv3_id}
+    }
+    response = client.post("/events", json = event)
+    assert response.status_code == 202
+
+   # PARCEL_PICKED_UP: locker3_id, comp3_id
+    event = {
+        "event_id": str(uuid.uuid4()),
+        "occurred_at": datetime.now().isoformat(),
+        "locker_id": locker3_id,
+        "type": EventType.PARCEL_PICKED_UP,
+        "payload": {PayloadType.COMPARTMENT_ID: comp3_id, PayloadType.RESERVATION_ID: resv3_id}
+    }
+    response = client.post("/events", json = event)
+    assert response.status_code == 202
