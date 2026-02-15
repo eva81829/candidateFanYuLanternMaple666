@@ -6,13 +6,19 @@ class InMemoryProjection(Projection):
         self._lockers: dict[str, Locker] = {} # key = locker_id
         self._reservations: dict[str, Reservation] = {} # key = reservation_id
 
+    def rebuild(self, event_store: EventStore) -> None:
+        for event in event_store.load_all():
+            self.apply(event)
+
     def apply(self, event: LockerEvent) -> None:
         if event.type == EventType.COMPARTMENT_REGISTERED:
             self._register_compartment(event)
         elif event.type == EventType.RESERVATION_CREATED:
-            self._create_reservation(event)  
+            self._create_reservation(event)
         elif event.type == EventType.RESERVATION_EXPIRED:
             self._expire_reservation(event)
+        elif event.type == EventType.FAULT_REPORTED:
+            self._report_fault(event) 
 
     def query_locker(self, locker_id: str) -> Locker | None:
         return self._lockers.get(locker_id)
@@ -77,10 +83,22 @@ class InMemoryProjection(Projection):
 
         locker.update_reservation(comp_id, resv_id, ResvStatus.EXPIRED)
 
-    # def report_fault():
-    # def clear_fault():
+    def _report_fault(self, event: LockerEvent) -> None:
+        comp_id = event.payload.get(PayloadType.COMPARTMENT_ID)
+        if not comp_id:
+            raise Exception("Compartment ID required")
 
+        severity = event.payload.get(PayloadType.SEVERITY)
+        if not severity:
+            raise Exception("Severity required")
 
-    # def rebuild(self, event_store: EventStore) -> None:
-    #     for event in event_store.load_all():
-    #         self.apply(event)
+        locker = self.query_locker(event.locker_id)
+        if not locker:
+            raise Exception("Locker not found")
+        
+        locker.report_fault_compartment(comp_id, severity)
+
+    # def _clear_fault(self, event: LockerEvent) -> None:
+        # comp_id = event.payload.get(PayloadType.COMPARTMENT_ID)
+        # if not comp_id:
+        #     raise Exception("Compartment ID required")

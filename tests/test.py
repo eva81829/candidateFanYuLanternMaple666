@@ -13,9 +13,6 @@ event_file.write_text("")
 def client() -> TestClient:
     return TestClient(app)
 
-# def _new_id(self) -> str:
-#     return str(uuid.uuid4())
-
 def test_api_flow(client: TestClient) -> None:
     locker1_id = "L1"
     locker2_id = "L2"
@@ -26,6 +23,7 @@ def test_api_flow(client: TestClient) -> None:
     resv1_id = "R1"
     resv2_id = "R2" 
 
+    # COMPARTMENT_REGISTERED: locker1_id, comp1_id
     event = {
         "event_id": str(uuid.uuid4()),
         "occurred_at": datetime.now().isoformat(),
@@ -36,10 +34,11 @@ def test_api_flow(client: TestClient) -> None:
     response = client.post("/events", json = event)
     assert response.status_code == 200
 
+    # RESERVATION_CREATED: locker1_id, comp1_id, resv1_id
     event = {
         "event_id": str(uuid.uuid4()),
         "occurred_at": datetime.now().isoformat(),
-        "locker_id": "L1",
+        "locker_id": locker1_id,
         "type": EventType.RESERVATION_CREATED,
         "payload": {PayloadType.COMPARTMENT_ID: comp1_id, PayloadType.RESERVATION_ID: resv1_id}
     }
@@ -61,10 +60,11 @@ def test_api_flow(client: TestClient) -> None:
     json_data = response.json()
     assert json_data[PayloadType.STATUS] == ResvStatus.CREATED
 
+    # RESERVATION_EXPIRED: locker1_id, comp1_id, resv1_id
     event = {
         "event_id": str(uuid.uuid4()),
         "occurred_at": datetime.now().isoformat(),
-        "locker_id": "L1",
+        "locker_id": locker1_id,
         "type": EventType.RESERVATION_EXPIRED,
         "payload": {PayloadType.COMPARTMENT_ID: comp1_id, PayloadType.RESERVATION_ID: resv1_id}
     }
@@ -75,3 +75,25 @@ def test_api_flow(client: TestClient) -> None:
     assert response.status_code == 200
     json_data = response.json()
     assert json_data[PayloadType.STATUS] == ResvStatus.EXPIRED
+
+    # COMPARTMENT_REGISTERED: locker2_id, comp2_id
+    event = {
+        "event_id": str(uuid.uuid4()),
+        "occurred_at": datetime.now().isoformat(),
+        "locker_id": locker2_id,
+        "type": EventType.COMPARTMENT_REGISTERED,
+        "payload": {PayloadType.COMPARTMENT_ID: comp2_id}
+    }
+    response = client.post("/events", json = event)
+    assert response.status_code == 200
+
+   # FAULT_REPORTED: locker2_id, comp2_id
+    event = {
+        "event_id": str(uuid.uuid4()),
+        "occurred_at": datetime.now().isoformat(),
+        "locker_id": locker2_id,
+        "type": EventType.FAULT_REPORTED,
+        "payload": {PayloadType.COMPARTMENT_ID: comp2_id, PayloadType.SEVERITY: 3}
+    }
+    response = client.post("/events", json = event)
+    assert response.status_code == 200

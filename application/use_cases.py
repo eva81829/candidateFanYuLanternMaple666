@@ -18,5 +18,3 @@ class LockerService:
 
     def get_reservation_state(self, reservation_id: str) -> Reservation:
         return self.projection.query_reservation(reservation_id)
-
-    # self.projection.rebuild(self.event_store)

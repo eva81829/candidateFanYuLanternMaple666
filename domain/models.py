@@ -21,6 +21,7 @@ class PayloadType(str, Enum):
     COMPARTMENT_ID = "compartment_id"
     RESERVATION_ID = "reservation_id"
     STATUS = "status"
+    SEVERITY = "severity"
 
 class LockerEvent:
     def __init__(self, event_id: str, occurred_at: str, locker_id: str, type: EventType, payload: dict[str, Any]):
@@ -51,8 +52,16 @@ class Locker:
         self._compartments[compartment_id] = compartment
         self.num_compartment += 1
 
+    def report_fault_compartment(self, compartment_id: str, severity: int) -> None:
+        if compartment_id not in self._compartments:
+            raise Exception("Compartment not found")
+        
+        # a compartment with fault of severity ≥ 3 are degraded
+        if severity >= 3:
+            compartment = self._compartments[compartment_id]
+            compartment.degraded = True
+
     def get_reservation(self, compartment_id: str) -> Reservation | None:
-        compartment_id
         if compartment_id not in self._compartments:
             raise Exception("Compartment not found")
         
@@ -69,6 +78,10 @@ class Locker:
         if compartment.reservation:
             raise Exception("Reservation already exists")
         
+        # a degraded compartment cannot accept new reservations
+        if compartment.degraded:
+            raise Exception("Degraded compartment cannot accept new reservations")
+
         reservation = Reservation(reservation_id)
         compartment.reservation = reservation
         self.num_reservation += 1
@@ -86,11 +99,6 @@ class Locker:
         if compartment.reservation.reservation_id != reservation_id:
             raise Exception("Reservation ID does not match")
         compartment.reservation.status = status
-
-    # def degrade_compartment(self, compartment_id: str) -> None:
-    #     compartment = self._compartments[compartment_id]
-    #     compartment.degraded = True
-    #     compartment.reservation = None
 
 class Compartment:
     def __init__(self, compartment_id: str):
