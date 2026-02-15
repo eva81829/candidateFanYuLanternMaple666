@@ -1,4 +1,4 @@
-from domain.models import LockerEvent, Locker, Compartment, Reservation
+from domain.models import EventResult, LockerEvent, Locker, Compartment, Reservation
 from domain.repositories import EventStore, Projection
 
 class LockerService:
@@ -7,8 +7,10 @@ class LockerService:
         self.event_store = event_store
 
     def handle(self, event: LockerEvent):
-        self.projection.apply(event)
-        self.event_store.append(event)
+        result = self.projection.apply(event)
+        if result != EventResult.SUCCESS:
+            return result
+        return self.event_store.append(event)
 
     def get_locker_state(self, locker_id: str) -> Locker:
         return self.projection.query_locker(locker_id)

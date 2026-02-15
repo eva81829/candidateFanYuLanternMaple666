@@ -32,7 +32,7 @@ def test_api_flow(client: TestClient) -> None:
         "payload": {PayloadType.COMPARTMENT_ID: comp1_id}
     }
     response = client.post("/events", json = event)
-    assert response.status_code == 200
+    assert response.status_code == 202
 
     # RESERVATION_CREATED: locker1_id, comp1_id, resv1_id
     event = {
@@ -43,7 +43,7 @@ def test_api_flow(client: TestClient) -> None:
         "payload": {PayloadType.COMPARTMENT_ID: comp1_id, PayloadType.RESERVATION_ID: resv1_id}
     }
     response = client.post("/events", json = event)
-    assert response.status_code == 200   
+    assert response.status_code  == 202
     
     response = client.get(f"/lockers/{locker1_id}")
     assert response.status_code == 200
@@ -69,7 +69,7 @@ def test_api_flow(client: TestClient) -> None:
         "payload": {PayloadType.COMPARTMENT_ID: comp1_id, PayloadType.RESERVATION_ID: resv1_id}
     }
     response = client.post("/events", json = event)
-    assert response.status_code == 200
+    assert response.status_code == 202
 
     response = client.get(f"/reservations/{resv1_id}")
     assert response.status_code == 200
@@ -85,7 +85,7 @@ def test_api_flow(client: TestClient) -> None:
         "payload": {PayloadType.COMPARTMENT_ID: comp2_id}
     }
     response = client.post("/events", json = event)
-    assert response.status_code == 200
+    assert response.status_code == 202
 
    # FAULT_REPORTED: locker2_id, comp2_id
     event = {
@@ -96,4 +96,6 @@ def test_api_flow(client: TestClient) -> None:
         "payload": {PayloadType.COMPARTMENT_ID: comp2_id, PayloadType.SEVERITY: 3}
     }
     response = client.post("/events", json = event)
-    assert response.status_code == 200
+    assert response.status_code == 202
+    json_data = response.json()
+    assert json_data["description"] == "Event accepted"
