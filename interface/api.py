@@ -11,6 +11,10 @@ projection = InMemoryProjection()
 event_store = FileEventStore()
 service = LockerService(projection, event_store)
 
+@app.put("/rebuild")
+def rebuild_events() -> None:
+    service.rebuild_events()
+
 @app.post("/events")
 def handle_event(event: Event) -> Response:
     locker_event = LockerEvent(event.event_id, event.occurred_at, event.locker_id, event.type, event.payload)
@@ -35,9 +39,11 @@ def handle_event(event: Event) -> Response:
     )
 
 @app.get("/lockers/{locker_id}")
-def get_locker(locker_id: str) -> LockerSummary:
+def get_locker(locker_id: str) -> LockerSummary | None:
     locker = service.get_locker_state(locker_id)
-
+    if locker is None:
+        return None
+    
     return LockerSummary(
             locker_id = locker.locker_id,
             compartments = locker.num_compartment,
@@ -47,9 +53,11 @@ def get_locker(locker_id: str) -> LockerSummary:
         )
 
 @app.get("/lockers/{locker_id}/compartments/{compartment_id}")
-def get_compartment(locker_id: str, compartment_id: str) -> CompartmentStatus:
+def get_compartment(locker_id: str, compartment_id: str) -> CompartmentStatus | None:
     compartment = service.get_compartment_state(locker_id, compartment_id)
-
+    if compartment is None:
+        return None
+    
     return CompartmentStatus(
             compartment_id = compartment.compartment_id,
             degraded = compartment.degraded,
@@ -57,9 +65,11 @@ def get_compartment(locker_id: str, compartment_id: str) -> CompartmentStatus:
         )
 
 @app.get("/reservations/{reservation_id}")
-def get_reservation(reservation_id: str) -> ReservationStatus:
+def get_reservation(reservation_id: str) -> ReservationStatus | None:
     reservation = service.get_reservation_state(reservation_id)
-
+    if reservation is None:
+        return None
+    
     return ReservationStatus(
             reservation_id = reservation.reservation_id,
             status = reservation.status

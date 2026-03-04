@@ -8,8 +8,10 @@ class InMemoryProjection(Projection):
         self._reservations: dict[str, Reservation] = {} # key = reservation_id
 
     def rebuild(self, event_store: EventStore) -> int:
+        self._lockers.clear()
+        self._reservations.clear()
         for event in event_store.load_all():
-            result = self.apply(event)
+            result = self.apply(event, event_store)
             if result != EventResult.SUCCESS:
                 return result
         return EventResult.SUCCESS

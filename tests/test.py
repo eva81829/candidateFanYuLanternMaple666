@@ -230,3 +230,21 @@ def test_api_flow(client: TestClient) -> None:
     }
     response = client.post("/events", json = event)
     assert response.status_code == 202
+
+# 5. **Projection equivalence**
+#    - Incremental application vs full rebuild must yield identical `state_hash`.
+    # get_locker
+    response = client.get(f"/lockers/{locker1_id}")
+    assert response.status_code == 200
+    json_data = response.json()
+    state_hash1 = json_data["state_hash"]
+
+    response = client.put("/rebuild")
+    assert response.status_code == 200
+
+    response = client.get(f"/lockers/{locker1_id}")
+    assert response.status_code == 200
+    state_hash2 = json_data["state_hash"]
+    assert state_hash1 == state_hash2
+
+
