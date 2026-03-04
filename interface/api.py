@@ -14,7 +14,7 @@ service = LockerService(projection, event_store)
 @app.post("/events")
 def handle_event(event: Event) -> Response:
     locker_event = LockerEvent(event.event_id, event.occurred_at, event.locker_id, event.type, event.payload)
-    result = service.handle(locker_event)
+    result = service.handle_event(locker_event)
     if result == EventResult.SUCCESS:
         content = '{"description": "Event accepted"}'
         status_code = status.HTTP_202_ACCEPTED

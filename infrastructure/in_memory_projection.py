@@ -1,5 +1,6 @@
 from domain.models import EventResult, EventType, PayloadType, LockerEvent, Locker, Compartment, Reservation
 from domain.repositories import EventStore, Projection
+import json, hashlib
 
 class InMemoryProjection(Projection):
     def __init__(self):
@@ -8,13 +9,14 @@ class InMemoryProjection(Projection):
 
     def rebuild(self, event_store: EventStore) -> int:
         for event in event_store.load_all():
-            self.apply(event)
+            result = self.apply(event)
+            if result != EventResult.SUCCESS:
+                return result
         return EventResult.SUCCESS
 
     def apply(self, event: LockerEvent, event_store: EventStore) -> int:
-        result = EventResult.SUCCESS
         if event.type == EventType.COMPARTMENT_REGISTERED:
-            result =  self._register_compartment(event)
+            result = self._register_compartment(event)
         elif event.type == EventType.RESERVATION_CREATED:
             result = self._create_reservation(event)
         elif event.type == EventType.PARCEL_DEPOSITED:
@@ -26,7 +28,9 @@ class InMemoryProjection(Projection):
         elif event.type == EventType.FAULT_REPORTED:
             result = self._report_fault(event)
         elif event.type == EventType.FAULT_CLEARED:
-            result = self._clear_fault(event, event_store)     
+            result = self._clear_fault(event, event_store)
+        if result == EventResult.SUCCESS:
+            result = self._update_state_hash(event)
         return result
 
     def query_locker(self, locker_id: str) -> Locker | None:
@@ -52,7 +56,6 @@ class InMemoryProjection(Projection):
         if not locker:
             locker = Locker(event.locker_id)
             self._lockers[event.locker_id] = locker
-
         return locker.add_compartment(comp_id)
 
     def _create_reservation(self, event: LockerEvent) -> int:
@@ -200,3 +203,15 @@ class InMemoryProjection(Projection):
             return EventResult.VALIDATION_ERROR
 
         return locker.clear_fault_compartment(comp_id)
+    
+    def _update_state_hash(self, event: LockerEvent) -> str:
+        locker = self.query_locker(event.locker_id)
+        # Locker not found
+        if not locker:
+            return EventResult.VALIDATION_ERROR
+        
+        locker_dict = locker.get_locker_dict()
+        state_json = json.dumps(locker_dict, sort_keys=True)
+        locker.state_hash = hashlib.sha256(state_json.encode()).hexdigest()
+        return EventResult.SUCCESS
+

@@ -6,7 +6,10 @@ class LockerService:
         self.projection = projection
         self.event_store = event_store
 
-    def handle(self, event: LockerEvent):
+    def rebuild_events(self) -> int:
+        return self.projection.rebuild(self.event_store)
+
+    def handle_event(self, event: LockerEvent) -> int:
         result = self.projection.apply(event, self.event_store)
         if result != EventResult.SUCCESS:
             return result

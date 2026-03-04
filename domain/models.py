@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Any
 from enum import Enum
-import json, hashlib
 
 class EventResult(Enum):
     SUCCESS = 1
@@ -46,8 +45,8 @@ class Locker:
         self.num_compartment: int = 0
         self.num_reservation: int = 0
         self.num_degraded: int = 0
-        self._compartments: dict[str, Compartment] = {}  # {"compartment_id", Compartment}
         self.state_hash: str = ""
+        self._compartments: dict[str, Compartment] = {}  # {"compartment_id", Compartment}
 
     def get_compartment(self, compartment_id: str) -> Compartment | None:
         return self._compartments.get(compartment_id)
@@ -60,7 +59,6 @@ class Locker:
         compartment = Compartment(compartment_id)
         self._compartments[compartment_id] = compartment
         self.num_compartment += 1
-        self._update_state_hash()
         return EventResult.SUCCESS
 
     def report_fault_compartment(self, compartment_id: str, severity: int) -> int:
@@ -74,7 +72,6 @@ class Locker:
         if severity >= 3:
             compartment.degraded = True
             self.num_degraded += 1
-        self._update_state_hash()
         return EventResult.SUCCESS
 
     def clear_fault_compartment(self, compartment_id: str) -> int:
@@ -85,7 +82,6 @@ class Locker:
         compartment = self._compartments[compartment_id]
         compartment.fault = False        
         compartment.degraded = False
-        self._update_state_hash()
         return EventResult.SUCCESS
 
     def get_reservation(self, compartment_id: str) -> Reservation | None:
@@ -112,7 +108,6 @@ class Locker:
         reservation = Reservation(reservation_id)
         compartment.reservation = reservation
         self.num_reservation += 1
-        self._update_state_hash()
         return EventResult.SUCCESS
 
     def deposite_parcel(self, compartment_id: str, reservation_id: str) -> int:
@@ -150,11 +145,10 @@ class Locker:
                 return EventResult.DOMAIN_VIOLATION
 
         compartment.reservation.status = status
-        self._update_state_hash()   
         return EventResult.SUCCESS
     
-    def _update_state_hash(self):
-        # deterministic serialization
+    def get_locker_dict(self) -> dict:
+        # Convert locker state to a dictionary
         compartments_data = {
             compartment_id: {
                 "fault": compartment.fault,
@@ -166,15 +160,14 @@ class Locker:
             }
             for compartment_id, compartment in sorted(self._compartments.items())
         }
-        state = {
+        locker_dict = {
             "locker_id": self.locker_id,
             "num_compartment": self.num_compartment,
             "num_reservation": self.num_reservation,
             "num_degraded": self.num_degraded,
             "compartments": compartments_data,
         }
-        state_json = json.dumps(state, sort_keys=True)
-        self.state_hash = hashlib.sha256(state_json.encode()).hexdigest()
+        return locker_dict
 
 class Compartment:
     def __init__(self, compartment_id: str):
